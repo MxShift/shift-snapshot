@@ -11,9 +11,10 @@ For more information about SHIFT please visit - http://www.shiftnrg.org/
 Execute the following commands
 ```
 cd ~/
-git clone https://github.com/mrgrshift/shift-snapshot
+git clone https://github.com/MxShift/shift-snapshot
 cd shift-snapshot/
-bash shift-snapshot.sh help
+chmod u+x shift-snapshot.sh
+./shift-snapshot.sh help
 ```
 ##Available commands
 
