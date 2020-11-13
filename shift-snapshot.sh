@@ -11,7 +11,7 @@ export LANGUAGE=en_US.UTF-8
 #============================================================
 echo " "
 
-if [ ! -f ../shift/app.js ]; then
+if [ ! -f ../shift-lisk/app.js ]; then
   echo "Error: No shift installation detected. Exiting."
   exit 1
 fi
@@ -21,7 +21,7 @@ if [ "\$USER" == "root" ]; then
   exit 1
 fi
 
-SHIFT_CONFIG=~/shift/config.json
+SHIFT_CONFIG=~/shift-lisk/config.json
 DB_NAME="$(grep "database" $SHIFT_CONFIG | cut -f 4 -d '"')"
 DB_USER="$(grep "user" $SHIFT_CONFIG | cut -f 4 -d '"')"
 DB_PASS="$(grep "password" $SHIFT_CONFIG | cut -f 4 -d '"' | head -1)"
