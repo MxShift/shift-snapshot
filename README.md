@@ -13,7 +13,7 @@ Execute the following commands
 cd ~/
 git clone https://github.com/MxShift/shift-snapshot
 cd shift-snapshot/
-chmod u+x shift-snapshot.sh
+chmod +x shift-snapshot.sh
 ./shift-snapshot.sh help
 ```
 ##Available commands
