@@ -1,17 +1,28 @@
 #!/bin/bash
-VERSION="0.2"
+VERSION="0.3"
 
 export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 export LANGUAGE=en_US.UTF-8
 
+# CONFIG
+
+SHIFT_DIRECTORY=~/shift-lisk
+
+
 #============================================================
 #= snapshot.sh v0.2 created by mrgr                         =
 #= Please consider voting for delegate mrgr                 =
 #============================================================
+
+#============================================================
+#= snapshot.sh v0.3 created by Mx                           =
+#= Please consider voting for delegate 'mx'                 =
+#============================================================
+
 echo " "
 
-if [ ! -f ../shift-lisk/app.js ]; then
+if [ ! -f ${SHIFT_DIRECTORY}/app.js ]; then
   echo "Error: No shift installation detected. Exiting."
   exit 1
 fi
@@ -21,7 +32,7 @@ if [ "\$USER" == "root" ]; then
   exit 1
 fi
 
-SHIFT_CONFIG=~/shift-lisk/config.json
+SHIFT_CONFIG=${SHIFT_DIRECTORY}/config.json
 DB_NAME="$(grep "database" $SHIFT_CONFIG | cut -f 4 -d '"')"
 DB_USER="$(grep "user" $SHIFT_CONFIG | cut -f 4 -d '"')"
 DB_PASS="$(grep "password" $SHIFT_CONFIG | cut -f 4 -d '"' | head -1)"
@@ -29,7 +40,7 @@ SNAPSHOT_COUNTER=snapshot/counter.json
 SNAPSHOT_LOG=snapshot/snapshot.log
 if [ ! -f "snapshot/counter.json" ]; then
   mkdir -p snapshot
-  sudo chmod a+x shift-snapshot.sh
+  sudo chmod +x shift-snapshot.sh
   echo "0" > $SNAPSHOT_COUNTER
   sudo chown postgres:${USER:=$(/usr/bin/id -run)} snapshot
   sudo chmod -R 777 snapshot
