@@ -84,6 +84,21 @@ Example of output:<br>
   --------------------------------------------------END                            
 ```
 
+### Schedule
+
+To create scheduled snapshots, you can add one of these commands to `cronatab -e`:
+
+```
+hourly cd ~/shift-snapshot && bash shift-snapshot.sh create
+
+daily cd ~/shift-snapshot && bash shift-snapshot.sh create
+
+weekly cd ~/shift-snapshot && bash shift-snapshot.sh create
+
+monthly cd ~/shift-snapshot && bash shift-snapshot.sh create
+```
+
+
 ## TODO
 ### schedule
 
