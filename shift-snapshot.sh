@@ -1,14 +1,13 @@
 #!/bin/bash
-VERSION="0.3"
+VERSION="0.4"
 
+# CONFIG
+SHIFT_DIRECTORY=~/shift-lisk
+
+# EXPORT
 export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 export LANGUAGE=en_US.UTF-8
-
-# CONFIG
-
-SHIFT_DIRECTORY=~/shift-lisk
-
 
 #============================================================
 #= snapshot.sh v0.2 created by mrgr                         =
@@ -16,19 +15,19 @@ SHIFT_DIRECTORY=~/shift-lisk
 #============================================================
 
 #============================================================
-#= snapshot.sh v0.3 created by Mx                           =
+#= snapshot.sh v0.4 created by Mx                           =
 #= Please consider voting for delegate 'mx'                 =
 #============================================================
 
 echo " "
 
 if [ ! -f ${SHIFT_DIRECTORY}/app.js ]; then
-  echo "Error: No shift installation detected. Exiting."
+  echo -e "Error: No shift-lisk installation detected in the directory ${SHIFT_DIRECTORY} \nPlease, change config: nano shift-snapshot.sh \nor install: https://github.com/ShiftNrg/shift-lisk"
   exit 1
 fi
 
 if [ "\$USER" == "root" ]; then
-  echo "Error: SHIFT should not be run be as root. Exiting."
+  echo "Error: shift-lisk should not be run be as root. Exiting."
   exit 1
 fi
 
@@ -74,21 +73,25 @@ restore_snapshot(){
   echo "--------------------------------------------------"
   SNAPSHOT_FILE=`ls -t snapshot/shift_db* | head  -1`
   if [ -z "$SNAPSHOT_FILE" ]; then
-    echo "****** No snapshot to restore, please consider create it first"
+    echo "! No snapshot to restore, please consider create it first"
     echo " "
     exit 1
   fi
   echo "Snapshot to restore = $SNAPSHOT_FILE"
 
-  read -p "Please stop node app.js first, are you ready (y/n)? " -n 1 -r
-  if [[ ! $REPLY =~ ^[Yy]$ ]]
+  read -p "shift-lisk node will be stopped, are you ready (y/n)? " -r
+  if [[ ! $REPLY =~ ^[Yyнд]$ ]]
   then
-     echo "***** Please stop node.js first.. then execute restore again"
+     echo "! Please stop app.js first.. then execute restore again"
      echo " "
      exit 1
   fi
 
-#snapshot restoring..
+bash ${SHIFT_DIRECTORY}/shift_manager.bash stop
+
+echo -e "\nSnapshot restoring started \nPlease keep calm and don't push the button :)"
+
+# snapshot restoring
   export PGPASSWORD=$DB_PASS
   pg_restore -d $DB_NAME "$SNAPSHOT_FILE" -U $DB_USER -h localhost -c -n public
 
@@ -98,6 +101,8 @@ restore_snapshot(){
   else
     echo "OK snapshot restored successfully."
   fi
+
+bash ${SHIFT_DIRECTORY}/shift_manager.bash start
 
 }
 
