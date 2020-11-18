@@ -1,11 +1,19 @@
 # shift-snapshot
-A bash script to automate backups for SHIFT blockchain
+A bash script to automate backups for [**shift-lisk**](https://github.com/ShiftNrg/shift-lisk) blockchain
 
-**v0.3**
+**v0.4** - added automatic shutdown and startup of a node during snapshot restore
 
-For more information about Shift Community Project please visit:
+For more information about Shift Community Project please visit: https://shiftproject.com/
 
-https://shiftproject.com/
+### Upgrade
+
+If you are in a version prior to **v0.4** you can upgrade with the following commands:
+
+```
+cd ~/shift-snapshot/ 
+git fetch
+git reset --hard origin/master
+```
 
 ## Requisites
     - This script works with postgres and shift_db, configured with shift user
@@ -27,6 +35,10 @@ chmod +x shift-snapshot.sh
     - create
     - restore
     - log
+    - help
+
+**TODO**
+
     - schedule
 		- hourly
 		- daily
@@ -72,6 +84,7 @@ Example of output:<br>
   --------------------------------------------------END                            
 ```
 
+## TODO
 ### schedule
 
 Schedule snapshot creation periodically, with the available parameters:
@@ -92,13 +105,3 @@ You will have a folder in ~/shift-snapshot/ called `snapshot/` where all your sn
 If you want to use a snapshot from different place (official snapshot for example or other node) you will need to download the snapshot file (with prefix: shift_db*) and copy it to the `~/shift-snapshot/snapshot/` folder.
 After you copy the shift_db*.tar file you can restore the blockchain with: `bash shift-snapshot.sh restore` and will use the last file found in the snapshot/ folder.<br>
 If you use the `schedule` command be aware you will have a log file located in `~/shift-snapshot/cron.log` with this you will know what is happened with your schedule.
-
-### Upgrade
-
-If you are in a version prior to **v0.3** you can upgrade with the following commands:
-
-```
-cd ~/shift-snapshot/ 
-git fetch
-git reset --hard origin/master
-```
