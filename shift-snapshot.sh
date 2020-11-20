@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION="0.5"
+VERSION="0.6"
 
 # CONFIG
 SHIFT_DIRECTORY=~/shift-lisk
@@ -15,7 +15,7 @@ export LANGUAGE=en_US.UTF-8
 #============================================================
 
 #============================================================
-#= snapshot.sh v0.5 created by Mx                           =
+#= snapshot.sh v0.6 created by Mx                           =
 #= Please consider voting for delegate 'mx'                 =
 #============================================================
 
@@ -63,15 +63,15 @@ ctrlc_count=0
 
 function no_ctrlc() # intercept user input
 {
-    let ctrlc_count++
-    echo
-    if [[ $ctrlc_count == 1 ]]; then
-        echo -e "${redTextOpen}!Warning. At shutdown, errors in the database are possible.${colorTextClose}"
-    #     echo "If you really want to exit, press Ctrl+C again."
-    else
-        echo -e "${redTextOpen}Exit.${colorTextClose}"
-        exit
-    fi
+  let ctrlc_count++
+  echo
+  if [[ $ctrlc_count == 1 ]]; then
+    echo -e "${redTextOpen}!Warning. At shutdown, errors in the database are possible.${colorTextClose}"
+    # echo "If you really want to exit, press Ctrl+C again."
+  else
+     echo -e "${redTextOpen}Exit.${colorTextClose}"
+     exit
+  fi
 }
 
 create_snapshot() {
@@ -97,6 +97,29 @@ create_snapshot() {
 
 }
 
+create_compressed_snapshot() {
+  export PGPASSWORD=$DB_PASS
+  echo -e " ${boldTextOpen}+ Creating compressed snapshot${colorTextClose}"
+  echo "--------------------------------------------------"
+  echo "..."
+  snapshotName="shift_db$NOW.snapshot.sql.gz"
+  snapshotLocation="$SNAPSHOT_DIRECTORY'$snapshotName'"
+  trap no_ctrlc SIGINT # intercept user input
+  sudo su postgres -c "pg_dump -Fp -Z 1 $DB_NAME > $snapshotLocation"
+  blockHeight=`psql -d $DB_NAME -U $DB_USER -h localhost -p 5432 -t -c "select height from blocks order by height desc limit 1;"`
+  dbSize=`psql -d $DB_NAME -U $DB_USER -h localhost -p 5432 -t -c "select pg_size_pretty(pg_database_size('$DB_NAME'));"`
+  trap -- SIGINT # release interception user input
+
+  if [ $? != 0 ]; then
+    echo -e "${redTextOpen}X Failed to create compressed snapshot.${colorTextClose}" | tee -a $SNAPSHOT_LOG
+    exit 1
+  else
+    myFileSizeCheck=$(du -h "$SNAPSHOT_DIRECTORY$snapshotName" | cut -f1)
+    echo -e "$NOW -- ${greenTextOpen}OK compressed snapshot created successfully${colorTextClose} at block$blockHeight ($myFileSizeCheck)." | tee -a $SNAPSHOT_LOG
+  fi
+
+}
+
 restore_snapshot(){
   echo -e " ${boldTextOpen}+ Restoring snapshot${colorTextClose}"
   echo "--------------------------------------------------"
@@ -109,7 +132,7 @@ restore_snapshot(){
   fi
   echo -e "Snapshot to restore = $SNAPSHOT_FILE"
 
-  read -p "$(echo -e ${highlitedTextOpen}"shift-lisk node will be stopped, are you ready (y/n)?"${colorTextClose})" -r
+  read -p "$(echo -e ${highlitedTextOpen}"shift-lisk node will be stopped, are you ready (y/n)?"${colorTextClose})  " -r
 
   if [[ ! $REPLY =~ ^[Yyнд]$ ]]
   then
@@ -118,15 +141,37 @@ restore_snapshot(){
      exit 1
   fi
 
-bash ${SHIFT_DIRECTORY}/shift_manager.bash stop
+  bash ${SHIFT_DIRECTORY}/shift_manager.bash stop
 
-echo -e "\n${boldTextOpen}Snapshot restoring started${colorTextClose}"
-echo "Please keep calm and don't push the button :)"
-
-# snapshot restoring
   trap no_ctrlc SIGINT # intercept user input
+
+  # snapshot restoring
   export PGPASSWORD=$DB_PASS
-  pg_restore -d $DB_NAME "$SNAPSHOT_FILE" -U $DB_USER -h localhost -c -n public
+  if [[ $SNAPSHOT_FILE == *"sql.gz"* ]]; then
+    # drop db
+    res=$(sudo -u postgres dropdb --if-exists "$DB_NAME" 2> /dev/null)
+    res=$(sudo -u postgres createdb -O "$DB_USER" "$DB_NAME" 2> /dev/null)
+    res=$(sudo -u postgres psql -t -c "SELECT count(*) FROM pg_database where datname='$DB_NAME'" 2> /dev/null)
+
+    if [[ $res -eq 1 ]]; then
+      echo "√ Database reset successfully."
+    else
+      echo "X Failed to create Postgresql database."
+      exit 1
+    fi
+
+    echo -e "\n${boldTextOpen}Compressed snapshot restoring started${colorTextClose}"
+    echo "Please keep calm and don't push the button :)"
+
+    # restore dump
+    gunzip -fcq "$SNAPSHOT_FILE" | psql -d $DB_NAME -U $DB_USER -h localhost -q &> /dev/null
+  else
+    echo -e "\n${boldTextOpen}Snapshot restoring started${colorTextClose}"
+    echo "Please keep calm and don't push the button :)"
+    # psql -d $DB_NAME -U $DB_USER -h localhost -q -f "$SNAPSHOT_FILE" &> /dev/null
+    pg_restore -d $DB_NAME "$SNAPSHOT_FILE" -U $DB_USER -h localhost -c -n public
+  fi
+
   trap -- SIGINT # release interception user input
 
   if [ $? != 0 ]; then
@@ -136,7 +181,7 @@ echo "Please keep calm and don't push the button :)"
     echo -e "${greenTextOpen}OK snapshot restored successfully.${colorTextClose}"
   fi
 
-bash ${SHIFT_DIRECTORY}/shift_manager.bash start
+  bash ${SHIFT_DIRECTORY}/shift_manager.bash start
 
 }
 
@@ -153,8 +198,8 @@ case $1 in
 "create")
   create_snapshot
   ;;
-"create_archive")
-  create_snapshot_archive
+"create_compressed")
+  create_compressed_snapshot
   ;;
 "restore")
   restore_snapshot
