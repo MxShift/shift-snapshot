@@ -1,13 +1,13 @@
 # shift-snapshot
 A bash script to automate backups for [**shift-lisk**](https://github.com/ShiftNrg/shift-lisk) blockchain
 
-**v0.4** - added automatic shutdown and startup of a node during snapshot restore
+**v0.5** - added automatic shutdown and startup of a node during snapshot restore
 
 For more information about Shift Community Project please visit: https://shiftproject.com/
 
 ### Upgrade
 
-If you are in a version prior to **v0.4** you can upgrade with the following commands:
+If you are in a version prior to **v0.5** you can upgrade with the following commands:
 
 ```
 cd ~/shift-snapshot/ 
@@ -79,8 +79,8 @@ Example of output:<br>
 ```
    + Snapshot Log                                                                  
   --------------------------------------------------                               
-  20-10-2016 - 20:59:06 -- Snapshot created successfully at block  48967 ( 43 MB)  
-  20-10-2016 - 21:36:07 -- Snapshot created successfully at block  49037 ( 43 MB)  
+  20-11-2020 - 20:59:06 -- Snapshot created successfully at block  4620000 (2.3G)  
+  20-11-2020 - 21:36:07 -- Snapshot created successfully at block  4625474 (2.3G)  
   --------------------------------------------------END                            
 ```
 
