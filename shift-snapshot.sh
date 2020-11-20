@@ -2,7 +2,7 @@
 VERSION="0.5"
 
 # CONFIG
-SHIFT_DIRECTORY=~/shift-m
+SHIFT_DIRECTORY=~/shift-lisk
 
 # EXPORT
 export LC_ALL=en_US.UTF-8
@@ -19,10 +19,19 @@ export LANGUAGE=en_US.UTF-8
 #= Please consider voting for delegate 'mx'                 =
 #============================================================
 
+# markdown
+redTextOpen="\e[31m"
+greenTextOpen="\e[1;32m"
+boldTextOpen="\e[1m"
+highlitedTextOpen="\e[44m"
+colorTextClose="\e[0m"
+
 echo " "
 
 if [ ! -f ${SHIFT_DIRECTORY}/app.js ]; then
-  echo -e "Error: No shift-lisk installation detected in the directory ${SHIFT_DIRECTORY} \nPlease, change config: nano shift-snapshot.sh \nor install: https://github.com/ShiftNrg/shift-lisk"
+  echo -e "${redTextOpen}Error: No shift-lisk installation detected in the directory ${SHIFT_DIRECTORY}${colorTextClose}"
+  echo -e "Please, change config: ${boldTextOpen}nano shift-snapshot.sh${colorTextClose}"
+  echo "or install: https://github.com/ShiftNrg/shift-lisk"
   exit 1
 fi
 
@@ -51,12 +60,6 @@ NOW=$(date +"%d-%m-%Y - %T")
 ################################################################################
 
 ctrlc_count=0
-
-redTextOpen="\e[31m"
-greenTextOpen="\e[1;32m"
-boldTextOpen="\e[1m"
-highlitedTextOpen="\e[44m"
-colorTextClose="\e[0m"
 
 function no_ctrlc() # intercept user input
 {
@@ -117,7 +120,8 @@ restore_snapshot(){
 
 bash ${SHIFT_DIRECTORY}/shift_manager.bash stop
 
-echo -e "\n${boldTextOpen}Snapshot restoring started${colorTextClose} \nPlease keep calm and don't push the button :)"
+echo -e "\n${boldTextOpen}Snapshot restoring started${colorTextClose}"
+echo "Please keep calm and don't push the button :)"
 
 # snapshot restoring
   trap no_ctrlc SIGINT # intercept user input
