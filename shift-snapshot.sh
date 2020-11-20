@@ -1,8 +1,8 @@
 #!/bin/bash
-VERSION="0.4"
+VERSION="0.5"
 
 # CONFIG
-SHIFT_DIRECTORY=~/shift-lisk
+SHIFT_DIRECTORY=~/shift-m
 
 # EXPORT
 export LC_ALL=en_US.UTF-8
@@ -15,7 +15,7 @@ export LANGUAGE=en_US.UTF-8
 #============================================================
 
 #============================================================
-#= snapshot.sh v0.4 created by Mx                           =
+#= snapshot.sh v0.5 created by Mx                           =
 #= Please consider voting for delegate 'mx'                 =
 #============================================================
 
@@ -50,9 +50,17 @@ SNAPSHOT_DIRECTORY=snapshot/
 NOW=$(date +"%d-%m-%Y - %T")
 ################################################################################
 
+ctrlc_count=0
+
+redTextOpen="\e[31m"
+greenTextOpen="\e[1;32m"
+boldTextOpen="\e[1m"
+highlitedTextOpen="\e[44m"
+colorTextClose="\e[0m"
+
 create_snapshot() {
   export PGPASSWORD=$DB_PASS
-  echo " + Creating snapshot"
+  echo -e " ${boldTextOpen}+ Creating snapshot${colorTextClose}"
   echo "--------------------------------------------------"
   echo "..."
   sudo su postgres -c "pg_dump -Ft $DB_NAME > $SNAPSHOT_DIRECTORY'shift_db$NOW.snapshot.tar'"
@@ -60,46 +68,47 @@ create_snapshot() {
   dbSize=`psql -d $DB_NAME -U $DB_USER -h localhost -p 5432 -t -c "select pg_size_pretty(pg_database_size('$DB_NAME'));"`
 
   if [ $? != 0 ]; then
-    echo "X Failed to create snapshot." | tee -a $SNAPSHOT_LOG
+    echo -e "${redTextOpen}X Failed to create snapshot.${colorTextClose}" | tee -a $SNAPSHOT_LOG
     exit 1
   else
-    echo "$NOW -- OK snapshot created successfully at block$blockHeight ($dbSize)." | tee -a $SNAPSHOT_LOG
+    echo -e "$NOW -- ${greenTextOpen}OK snapshot created successfully${colorTextClose} at block$blockHeight ($dbSize)." | tee -a $SNAPSHOT_LOG
   fi
 
 }
 
 restore_snapshot(){
-  echo " + Restoring snapshot"
+  echo -e " ${boldTextOpen}+ Restoring snapshot${colorTextClose}"
   echo "--------------------------------------------------"
   SNAPSHOT_FILE=`ls -t snapshot/shift_db* | head  -1`
   if [ -z "$SNAPSHOT_FILE" ]; then
-    echo "! No snapshot to restore, please consider create it first"
+    echo -e "${redTextOpen}!No snapshot to restore, please consider create it first${colorTextClose}"
     echo " "
     exit 1
   fi
-  echo "Snapshot to restore = $SNAPSHOT_FILE"
+  echo -e "Snapshot to restore = $SNAPSHOT_FILE"
 
-  read -p "shift-lisk node will be stopped, are you ready (y/n)? " -r
+  read -p "$(echo -e ${highlitedTextOpen}"shift-lisk node will be stopped, are you ready (y/n)?"${colorTextClose})" -r
+
   if [[ ! $REPLY =~ ^[Yyнд]$ ]]
   then
-     echo "! Please stop app.js first.. then execute restore again"
+     echo -e "${redTextOpen}!Please stop app.js first. Then execute restore again${colorTextClose}"
      echo " "
      exit 1
   fi
 
 bash ${SHIFT_DIRECTORY}/shift_manager.bash stop
 
-echo -e "\nSnapshot restoring started \nPlease keep calm and don't push the button :)"
+echo -e "\n${boldTextOpen}Snapshot restoring started${colorTextClose} \nPlease keep calm and don't push the button :)"
 
 # snapshot restoring
   export PGPASSWORD=$DB_PASS
   pg_restore -d $DB_NAME "$SNAPSHOT_FILE" -U $DB_USER -h localhost -c -n public
 
   if [ $? != 0 ]; then
-    echo "X Failed to restore."
+    echo -e "${redTextOpen}X Failed to restore.${colorTextClose}"
     exit 1
   else
-    echo "OK snapshot restored successfully."
+    echo -e "${greenTextOpen}OK snapshot restored successfully.${colorTextClose}"
   fi
 
 bash ${SHIFT_DIRECTORY}/shift_manager.bash start
@@ -119,14 +128,26 @@ case $1 in
 "create")
   create_snapshot
   ;;
+"create_archive")
+  create_snapshot_archive
+  ;;
 "restore")
   restore_snapshot
+  ;;
+"verify")
+  echo "Hello my friend - $NOW"
+  ;;
+"create_verified")
+  echo "Hello my friend - $NOW"
   ;;
 "log")
   show_log
   ;;
 "hello")
   echo "Hello my friend - $NOW"
+  ;;
+"test")
+  start_test
   ;;
 "help")
   echo "Available commands are: "
