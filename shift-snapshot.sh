@@ -36,7 +36,7 @@ if [ ! -f ${SHIFT_DIRECTORY}/app.js ]; then
 fi
 
 if [ "\$USER" == "root" ]; then
-  echo "Error: shift-lisk should not be run be as root. Exiting."
+  echo -e "${redTextOpen}Error: shift-lisk should not be run be as root. Exiting.${colorTextClose}"
   exit 1
 fi
 
