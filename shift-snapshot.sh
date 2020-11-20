@@ -63,7 +63,9 @@ create_snapshot() {
   echo -e " ${boldTextOpen}+ Creating snapshot${colorTextClose}"
   echo "--------------------------------------------------"
   echo "..."
-  sudo su postgres -c "pg_dump -Ft $DB_NAME > $SNAPSHOT_DIRECTORY'shift_db$NOW.snapshot.tar'"
+  snapshotName="shift_db$NOW.snapshot.tar"
+  snapshotLocation="$SNAPSHOT_DIRECTORY'$snapshotName'"
+  sudo su postgres -c "pg_dump -Ft $DB_NAME > $snapshotLocation"
   blockHeight=`psql -d $DB_NAME -U $DB_USER -h localhost -p 5432 -t -c "select height from blocks order by height desc limit 1;"`
   dbSize=`psql -d $DB_NAME -U $DB_USER -h localhost -p 5432 -t -c "select pg_size_pretty(pg_database_size('$DB_NAME'));"`
 
@@ -71,7 +73,8 @@ create_snapshot() {
     echo -e "${redTextOpen}X Failed to create snapshot.${colorTextClose}" | tee -a $SNAPSHOT_LOG
     exit 1
   else
-    echo -e "$NOW -- ${greenTextOpen}OK snapshot created successfully${colorTextClose} at block$blockHeight ($dbSize)." | tee -a $SNAPSHOT_LOG
+    myFileSizeCheck=$(du -h "$SNAPSHOT_DIRECTORY$snapshotName" | cut -f1)
+    echo -e "$NOW -- ${greenTextOpen}OK snapshot created successfully${colorTextClose} at block$blockHeight ($myFileSizeCheck)." | tee -a $SNAPSHOT_LOG
   fi
 
 }
@@ -82,6 +85,7 @@ restore_snapshot(){
   SNAPSHOT_FILE=`ls -t snapshot/shift_db* | head  -1`
   if [ -z "$SNAPSHOT_FILE" ]; then
     echo -e "${redTextOpen}!No snapshot to restore, please consider create it first${colorTextClose}"
+    echo -e "Using: bash shift-snapshot.sh create"
     echo " "
     exit 1
   fi
