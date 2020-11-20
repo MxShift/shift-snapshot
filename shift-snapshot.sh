@@ -58,6 +58,19 @@ boldTextOpen="\e[1m"
 highlitedTextOpen="\e[44m"
 colorTextClose="\e[0m"
 
+function no_ctrlc() # intercept user input
+{
+    let ctrlc_count++
+    echo
+    if [[ $ctrlc_count == 1 ]]; then
+        echo -e "${redTextOpen}!Warning. At shutdown, errors in the database are possible.${colorTextClose}"
+    #     echo "If you really want to exit, press Ctrl+C again."
+    else
+        echo -e "${redTextOpen}Exit.${colorTextClose}"
+        exit
+    fi
+}
+
 create_snapshot() {
   export PGPASSWORD=$DB_PASS
   echo -e " ${boldTextOpen}+ Creating snapshot${colorTextClose}"
@@ -65,9 +78,11 @@ create_snapshot() {
   echo "..."
   snapshotName="shift_db$NOW.snapshot.tar"
   snapshotLocation="$SNAPSHOT_DIRECTORY'$snapshotName'"
+  trap no_ctrlc SIGINT # intercept user input
   sudo su postgres -c "pg_dump -Ft $DB_NAME > $snapshotLocation"
   blockHeight=`psql -d $DB_NAME -U $DB_USER -h localhost -p 5432 -t -c "select height from blocks order by height desc limit 1;"`
   dbSize=`psql -d $DB_NAME -U $DB_USER -h localhost -p 5432 -t -c "select pg_size_pretty(pg_database_size('$DB_NAME'));"`
+  trap -- SIGINT # release interception user input
 
   if [ $? != 0 ]; then
     echo -e "${redTextOpen}X Failed to create snapshot.${colorTextClose}" | tee -a $SNAPSHOT_LOG
@@ -105,8 +120,10 @@ bash ${SHIFT_DIRECTORY}/shift_manager.bash stop
 echo -e "\n${boldTextOpen}Snapshot restoring started${colorTextClose} \nPlease keep calm and don't push the button :)"
 
 # snapshot restoring
+  trap no_ctrlc SIGINT # intercept user input
   export PGPASSWORD=$DB_PASS
   pg_restore -d $DB_NAME "$SNAPSHOT_FILE" -U $DB_USER -h localhost -c -n public
+  trap -- SIGINT # release interception user input
 
   if [ $? != 0 ]; then
     echo -e "${redTextOpen}X Failed to restore.${colorTextClose}"
