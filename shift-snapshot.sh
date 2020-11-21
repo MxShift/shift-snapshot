@@ -125,7 +125,7 @@ getSnapshotStatus() {
         getNodeStatus
       done
       echo -e "\n\n${boldTextOpen}$NOW -- $SHIFT_DIRECTORY"/$SHIFT_SNAPSHOT_NAME" - verified.${colorTextClose}"  | tee -a $SNAPSHOT_LOG
-      echo -e "${greenTextOpen}Snapshot verified! Height:$blockHeight Size: $myFileSizeCheck ${colorTextClose}"  | tee -a $SNAPSHOT_LOG
+      echo -e "${greenTextOpen}+ Snapshot verified! Height:$blockHeight Size: $myFileSizeCheck ${colorTextClose}"  | tee -a $SNAPSHOT_LOG
       break
     fi
 
@@ -138,7 +138,7 @@ nodeStatusCheck() {
 
   if (( "$height"+2 >= "$tHeight" )) ; then
     nodeOkay="true"
-    echo -e "\n${greenTextOpen}Node is fine${colorTextClose}\n"
+    echo -e "\n${greenTextOpen}+ Node is fine${colorTextClose}\n"
   else
     echo -e "\n${redTextOpen}Node is not synchronized with the blockchain. Can't create a good snapshot.${colorTextClose}"
     echo "Trying to wait for synchronization for 60 seconds"
@@ -149,7 +149,7 @@ nodeStatusCheck() {
 
       if (( "$height"+2 >= "$tHeight" )) ; then
         nodeOkay="true"
-        echo -e "\n${greenTextOpen}Node is fine${colorTextClose}\n"
+        echo -e "\n${greenTextOpen}+ Node is fine${colorTextClose}\n"
         break
       fi
     done
@@ -196,17 +196,17 @@ create_snapshot() {
   "9")
     dbComp="9"
     ;;
-  "--best") # fake key :)
+  "--best")
     dbComp="9"
     ;;
-  "--fast") # fake key :)
+  "--fast")
     dbComp="1"
     ;;
-  "-v") # fake key :)
+  "-v")
     dbComp="9"
     startVerified="true"
     ;;
-  "--verified") # fake key too :)
+  "--verified")
     dbComp="9"
     startVerified="true"
     ;;
@@ -355,14 +355,18 @@ case $1 in
   ;;
 "help")
   echo "Available commands are: "
-  echo "  create   - Create new snapshot"
-  echo "  restore  - Restore the last snapshot available in folder snapshot/"
-  echo "  log      - Display log"
+  echo "  create              Create a new snapshot with level of compression 1"
+  echo "  create [1-9]        Create a new snapshot with level of compression from 1 to 9"
+  echo "  create --best       Create a new snapshot with high level of compression (9)"
+  echo "  create -v"
+  echo "  create --verified   Create a new snapshot with high level of compression then verify it"
+  echo "  restore             Restore the last snapshot available in folder snapshot/"
+  echo "  log                 Display log"
   ;;
 *)
   echo "Error: Unrecognized command."
   echo ""
-  echo "Available commands are: create, restore, log, help"
-  echo "Try: bash shift-snapshot.sh help"
+  echo "Available commands are: create [1-9] -v, restore, log, help"
+  echo "Try: bash snap.sh help"
   ;;
 esac
