@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION="0.6"
+VERSION="0.7"
 
 # CONFIG
 SHIFT_DIRECTORY=~/shift-lisk
@@ -15,7 +15,7 @@ export LANGUAGE=en_US.UTF-8
 #============================================================
 
 #============================================================
-#= snapshot.sh v0.6 created by Mx                           =
+#= snapshot.sh v0.7 created by Mx                           =
 #= Please consider voting for delegate 'mx'                 =
 #============================================================
 
@@ -59,9 +59,10 @@ SNAPSHOT_DIRECTORY=snapshot/
 NOW=$(date +"%d-%m-%Y - %T")
 ################################################################################
 
+# intercept user input function
 ctrlc_count=0
 
-function no_ctrlc() # intercept user input
+no_ctrlc() 
 {
   let ctrlc_count++
   echo
@@ -76,32 +77,8 @@ function no_ctrlc() # intercept user input
 
 create_snapshot() {
   export PGPASSWORD=$DB_PASS
-  echo -e " ${boldTextOpen}+ Creating snapshot${colorTextClose}"
-  echo "--------------------------------------------------"
-  echo "..."
-  snapshotName="shift_db$NOW.snapshot.tar"
-  snapshotLocation="$SNAPSHOT_DIRECTORY'$snapshotName'"
-  trap no_ctrlc SIGINT # intercept user input
-  sudo su postgres -c "pg_dump -Ft $DB_NAME > $snapshotLocation"
-  blockHeight=`psql -d $DB_NAME -U $DB_USER -h localhost -p 5432 -t -c "select height from blocks order by height desc limit 1;"`
-  dbSize=`psql -d $DB_NAME -U $DB_USER -h localhost -p 5432 -t -c "select pg_size_pretty(pg_database_size('$DB_NAME'));"`
-  trap -- SIGINT # release interception user input
-
-  if [ $? != 0 ]; then
-    echo -e "${redTextOpen}X Failed to create snapshot.${colorTextClose}" | tee -a $SNAPSHOT_LOG
-    exit 1
-  else
-    myFileSizeCheck=$(du -h "$SNAPSHOT_DIRECTORY$snapshotName" | cut -f1)
-    echo -e "$NOW -- ${greenTextOpen}OK snapshot created successfully${colorTextClose} at block$blockHeight ($myFileSizeCheck)." | tee -a $SNAPSHOT_LOG
-  fi
-
-}
-
-create_compressed_snapshot() {
-  export PGPASSWORD=$DB_PASS
   echo -e " ${boldTextOpen}+ Creating compressed snapshot${colorTextClose}"
   echo "--------------------------------------------------"
-  echo "..."
   snapshotName="shift_db$NOW.snapshot.sql.gz"
   snapshotLocation="$SNAPSHOT_DIRECTORY'$snapshotName'"
   trap no_ctrlc SIGINT # intercept user input
@@ -111,11 +88,11 @@ create_compressed_snapshot() {
   trap -- SIGINT # release interception user input
 
   if [ $? != 0 ]; then
-    echo -e "${redTextOpen}X Failed to create compressed snapshot.${colorTextClose}" | tee -a $SNAPSHOT_LOG
+    echo -e "\n${redTextOpen}X Failed to create compressed snapshot.${colorTextClose}" | tee -a $SNAPSHOT_LOG
     exit 1
   else
     myFileSizeCheck=$(du -h "$SNAPSHOT_DIRECTORY$snapshotName" | cut -f1)
-    echo -e "$NOW -- ${greenTextOpen}OK compressed snapshot created successfully${colorTextClose} at block$blockHeight ($myFileSizeCheck)." | tee -a $SNAPSHOT_LOG
+    echo -e "\n$NOW -- ${greenTextOpen}OK compressed snapshot created successfully${colorTextClose} at block$blockHeight ($myFileSizeCheck)." | tee -a $SNAPSHOT_LOG
   fi
 
 }
@@ -131,7 +108,6 @@ restore_snapshot(){
     exit 1
   fi
   echo -e "Snapshot to restore = $SNAPSHOT_FILE"
-
   read -p "$(echo -e ${highlitedTextOpen}"shift-lisk node will be stopped, are you ready (y/n)?"${colorTextClose})  " -r
 
   if [[ ! $REPLY =~ ^[Yyнд]$ ]]
@@ -147,30 +123,23 @@ restore_snapshot(){
 
   # snapshot restoring
   export PGPASSWORD=$DB_PASS
-  if [[ $SNAPSHOT_FILE == *"sql.gz"* ]]; then
-    # drop db
-    res=$(sudo -u postgres dropdb --if-exists "$DB_NAME" 2> /dev/null)
-    res=$(sudo -u postgres createdb -O "$DB_USER" "$DB_NAME" 2> /dev/null)
-    res=$(sudo -u postgres psql -t -c "SELECT count(*) FROM pg_database where datname='$DB_NAME'" 2> /dev/null)
+  # drop db
+  resp=$(sudo -u postgres dropdb --if-exists "$DB_NAME" 2> /dev/null)
+  resp=$(sudo -u postgres createdb -O "$DB_USER" "$DB_NAME" 2> /dev/null)
+  resp=$(sudo -u postgres psql -t -c "SELECT count(*) FROM pg_database where datname='$DB_NAME'" 2> /dev/null)
 
-    if [[ $res -eq 1 ]]; then
-      echo "√ Database reset successfully."
-    else
-      echo "X Failed to create Postgresql database."
-      exit 1
-    fi
-
-    echo -e "\n${boldTextOpen}Compressed snapshot restoring started${colorTextClose}"
-    echo "Please keep calm and don't push the button :)"
-
-    # restore dump
-    gunzip -fcq "$SNAPSHOT_FILE" | psql -d $DB_NAME -U $DB_USER -h localhost -q &> /dev/null
+  if [[ $resp -eq 1 ]]; then
+    echo "√ Database reset successfully."
   else
-    echo -e "\n${boldTextOpen}Snapshot restoring started${colorTextClose}"
-    echo "Please keep calm and don't push the button :)"
-    # psql -d $DB_NAME -U $DB_USER -h localhost -q -f "$SNAPSHOT_FILE" &> /dev/null
-    pg_restore -d $DB_NAME "$SNAPSHOT_FILE" -U $DB_USER -h localhost -c -n public
+    echo "X Failed to create Postgresql database."
+    exit 1
   fi
+
+  echo -e "\n${boldTextOpen}Snapshot restoring started${colorTextClose}"
+  echo "Please keep calm and don't push the button :)"
+
+  # restore dump
+  gunzip -fcq "$SNAPSHOT_FILE" | psql -d $DB_NAME -U $DB_USER -h localhost -q &> /dev/null
 
   trap -- SIGINT # release interception user input
 
@@ -197,9 +166,6 @@ show_log(){
 case $1 in
 "create")
   create_snapshot
-  ;;
-"create_compressed")
-  create_compressed_snapshot
   ;;
 "restore")
   restore_snapshot
