@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION="0.9"
+VERSION="1.0"
 
 # CONFIG
 SHIFT_DIRECTORY=~/shift-lisk
@@ -16,7 +16,7 @@ export LANGUAGE=en_US.UTF-8
 #============================================================
 
 #============================================================
-#= snapshot.sh v0.9 created by Mx                           =
+#= snapshot.sh v1.0 created by Mx                           =
 #= Please consider voting for delegate 'mx'                 =
 #============================================================
 
@@ -240,6 +240,32 @@ create_snapshot() {
   else
     myFileSizeCheck=$(du -h "$SNAPSHOT_DIRECTORY$snapshotName" | cut -f1)
     echo -e "\n$NOW -- ${greenTextOpen}OK compressed snapshot created successfully${colorTextClose} at block$blockHeight ($myFileSizeCheck)." | tee -a $SNAPSHOT_LOG
+  fi
+
+  if [[ $startVerified == "true" ]]; then
+    echo -e "\n ${boldTextOpen}+ Verifying snapshot${colorTextClose}"
+    echo "--------------------------------------------------"
+    # rename
+    sudo mv $SNAPSHOT_DIRECTORY"$snapshotName" $SNAPSHOT_DIRECTORY"$SHIFT_SNAPSHOT_NAME"
+    # delete old
+    sudo rm -f $SHIFT_DIRECTORY"/$SHIFT_SNAPSHOT_NAME"
+    # move new
+    sudo mv $SNAPSHOT_DIRECTORY"$SHIFT_SNAPSHOT_NAME" ${SHIFT_DIRECTORY}"/"
+
+    echo -e "${highlitedTextOpen}shift-lisk node will be stopped for rebuild${colorTextClose}"
+    echo -e "press ${boldTextOpen}Ctrl+C${colorTextClose} to abort"
+    (sleep 5) & # to start progress bar
+    app_pid=$! # progress bar
+    progress_bar "$sp1" "$app_pid" # progress bar
+
+    echo "n" | bash ${SHIFT_DIRECTORY}/shift_manager.bash rebuild
+
+    # pause to start node synchronization
+    (sleep 5) & # to start progress bar
+    app_pid=$! # progress bar
+    progress_bar "$sp1" "$app_pid" # progress bar
+
+    getSnapshotStatus
   fi
 }
 
