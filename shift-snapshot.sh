@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION="0.7"
+VERSION="0.8"
 
 # CONFIG
 SHIFT_DIRECTORY=~/shift-lisk
@@ -15,7 +15,7 @@ export LANGUAGE=en_US.UTF-8
 #============================================================
 
 #============================================================
-#= snapshot.sh v0.7 created by Mx                           =
+#= snapshot.sh v0.8 created by Mx                           =
 #= Please consider voting for delegate 'mx'                 =
 #============================================================
 
@@ -89,13 +89,48 @@ progress_bar() {
 }
 
 create_snapshot() {
+  # retrieve parameter of compression
+  case $1 in
+  "1")
+    dbComp="1"
+    ;;
+  "2")
+    dbComp="2"
+    ;;
+  "3")
+    dbComp="3"
+    ;;
+  "4")
+    dbComp="4"
+    ;;
+  "5")
+    dbComp="5"
+    ;;
+  "6")
+    dbComp="6"
+    ;;
+  "7")
+    dbComp="7"
+    ;;
+  "8")
+    dbComp="8"
+    ;;
+  "9")
+    dbComp="9"
+    ;;
+  *)
+    # default
+    dbComp="1"
+    ;;
+  esac
+
   export PGPASSWORD=$DB_PASS
-  echo -e " ${boldTextOpen}+ Creating compressed snapshot${colorTextClose}"
+  echo -e " ${boldTextOpen}+ Creating snapshot with compression: ${dbComp}${colorTextClose}"
   echo "--------------------------------------------------"
   snapshotName="shift_db$NOW.snapshot.sql.gz"
   snapshotLocation="$SNAPSHOT_DIRECTORY'$snapshotName'"
   trap no_ctrlc SIGINT # intercept user input
-  (sudo su postgres -c "pg_dump -Fp -Z 1 $DB_NAME > $snapshotLocation") & # to start progress bar
+  (sudo su postgres -c "pg_dump -Fp -Z ${dbComp} $DB_NAME > $snapshotLocation") & # to start progress bar
   app_pid=$! # progress bar
   progress_bar "$sp" "$app_pid" # progress bar
   blockHeight=`psql -d $DB_NAME -U $DB_USER -h localhost -p 5432 -t -c "select height from blocks order by height desc limit 1;"`
@@ -182,7 +217,7 @@ show_log(){
 
 case $1 in
 "create")
-  create_snapshot
+  create_snapshot $2
   ;;
 "restore")
   restore_snapshot
@@ -200,7 +235,7 @@ case $1 in
   echo "Hello my friend - $NOW"
   ;;
 "test")
-  start_test
+  start_test $2
   ;;
 "help")
   echo "Available commands are: "
