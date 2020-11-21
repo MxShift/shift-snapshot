@@ -163,7 +163,7 @@ nodeStatusCheck() {
 
 start_test() {
 
-  echo "test"
+  echo "Test"
 }
 
 create_snapshot() {
@@ -196,6 +196,12 @@ create_snapshot() {
   "9")
     dbComp="9"
     ;;
+  "--best") # fake key :)
+    dbComp="9"
+    ;;
+  "--fast") # fake key :)
+    dbComp="1"
+    ;;
   "-v") # fake key :)
     dbComp="9"
     startVerified="true"
@@ -226,9 +232,10 @@ create_snapshot() {
   dbSize=`psql -d $DB_NAME -U $DB_USER -h localhost -p 5432 -t -c "select pg_size_pretty(pg_database_size('$DB_NAME'));"`
   trap -- SIGINT # release interception user input
 
-  if [ $? != 0 ]; then
+  if [ $? != 0 ] || (( ctrlc_count > "0" )); then
     echo -e "\n${redTextOpen}X Failed to create compressed snapshot.${colorTextClose}" | tee -a $SNAPSHOT_LOG
     startVerified="false"
+    sudo rm -f "$SNAPSHOT_DIRECTORY$snapshotName"
     exit 1
   else
     myFileSizeCheck=$(du -h "$SNAPSHOT_DIRECTORY$snapshotName" | cut -f1)
@@ -310,13 +317,6 @@ case $1 in
   ;;
 "restore")
   restore_snapshot
-  ;;
-"verify")
-  echo "Hello my friend - $NOW"
-  ;;
-"create_verified")
-  create_verified_snapshot
-  echo "Hello my friend - $NOW"
   ;;
 "log")
   show_log
