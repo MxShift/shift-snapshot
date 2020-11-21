@@ -3,6 +3,7 @@ VERSION="0.8"
 
 # CONFIG
 SHIFT_DIRECTORY=~/shift-lisk
+TRUSTED_NODE="https://wallet.shiftnrg.org"
 
 # EXPORT
 export LC_ALL=en_US.UTF-8
@@ -54,6 +55,10 @@ if [ ! -f "snapshot/counter.json" ]; then
   sudo chmod -R 777 snapshot
 fi
 SNAPSHOT_DIRECTORY=snapshot/
+SHIFT_SNAPSHOT_NAME="blockchain.db.gz"
+IP="127.0.0.1"
+HTTP="http"
+PORT="9305"
 
 
 NOW=$(date +"%d-%m-%Y - %T")
@@ -88,8 +93,46 @@ progress_bar() {
     done
 }
 
+getNodeStatus() {
+  response=$(curl --connect-timeout 2 --fail  -s $HTTP://$IP:$PORT/api/loader/status/sync)
+  height=$(echo $response | jq '.height')
+  syncing=$(echo $response | jq '.syncing')
+  consensus=$(echo $response | jq '.consensus')
+
+  tResponse=$(curl --connect-timeout 2 --fail  -s $TRUSTED_NODE/api/loader/status/sync)
+  tHeight=$(echo $tResponse | jq '.height')
+
+  printf "\r${boldTextOpen}BLOCKCHAIN:${colorTextClose} $tHeight ${boldTextOpen}HEIGHT:${colorTextClose} $height ${boldTextOpen}CONSENSUS:${colorTextClose} ${consensus}%% ${boldTextOpen}SYNCING:${colorTextClose} ${syncing}"
+  sleep 1
+}
+
+getSnapshotStatus() {
+  echo -e "\n "
+  echo -e "${boldTextOpen}Please wait for blockchain synchronization:${colorTextClose}"
+
+  syncing="true"
+  height="0"
+  tHeight="2"
+  
+  while [[ "$syncing" = "true" ]] || (( "$height"+1 < "$tHeight" ))
+  do
+
+    getNodeStatus
+
+    if (( "$height"+1 >= "$tHeight" )) ; then
+      for (( a = 1; a < 5; a++ ))
+      do
+        getNodeStatus
+      done
+      echo -e "\n${greenTextOpen}$NOW -- $SHIFT_DIRECTORY"/$SHIFT_SNAPSHOT_NAME" snapshot verified!${colorTextClose}"  | tee -a $SNAPSHOT_LOG
+      break
+    fi
+
+  done
+}
+
 create_snapshot() {
-  # retrieve parameter of compression
+  # retrieve parameter of compression and other values
   case $1 in
   "1")
     dbComp="1"
@@ -118,6 +161,10 @@ create_snapshot() {
   "9")
     dbComp="9"
     ;;
+  "-v") # fake key :)
+    dbComp="9"
+    startVerified="true"
+    ;;    
   *)
     # default
     dbComp="1"
@@ -139,12 +186,17 @@ create_snapshot() {
 
   if [ $? != 0 ]; then
     echo -e "\n${redTextOpen}X Failed to create compressed snapshot.${colorTextClose}" | tee -a $SNAPSHOT_LOG
+    startVerified="false"
     exit 1
   else
     myFileSizeCheck=$(du -h "$SNAPSHOT_DIRECTORY$snapshotName" | cut -f1)
     echo -e "\n$NOW -- ${greenTextOpen}OK compressed snapshot created successfully${colorTextClose} at block$blockHeight ($myFileSizeCheck)." | tee -a $SNAPSHOT_LOG
   fi
 
+  if [[ $startVerified = "true" ]]; then
+    echo -e "\n ${boldTextOpen}+ Verification snapshot${colorTextClose}"
+    mv snapshotLocation newname
+  fi
 }
 
 restore_snapshot(){
@@ -226,6 +278,7 @@ case $1 in
   echo "Hello my friend - $NOW"
   ;;
 "create_verified")
+  create_verified_snapshot
   echo "Hello my friend - $NOW"
   ;;
 "log")
