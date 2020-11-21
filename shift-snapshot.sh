@@ -75,6 +75,19 @@ no_ctrlc()
   fi
 }
 
+# progress bar
+sp=",.·•oὀ0*' "
+sp1="/-\|+"
+i_pb=1
+
+progress_bar() {
+    while ps -p $2 >/dev/null 2>&1
+    do
+        printf "\b${1:i_pb++%${#1}:1}"
+        sleep 0.1
+    done
+}
+
 create_snapshot() {
   export PGPASSWORD=$DB_PASS
   echo -e " ${boldTextOpen}+ Creating compressed snapshot${colorTextClose}"
@@ -82,7 +95,9 @@ create_snapshot() {
   snapshotName="shift_db$NOW.snapshot.sql.gz"
   snapshotLocation="$SNAPSHOT_DIRECTORY'$snapshotName'"
   trap no_ctrlc SIGINT # intercept user input
-  sudo su postgres -c "pg_dump -Fp -Z 1 $DB_NAME > $snapshotLocation"
+  (sudo su postgres -c "pg_dump -Fp -Z 1 $DB_NAME > $snapshotLocation") & # to start progress bar
+  app_pid=$! # progress bar
+  progress_bar "$sp" "$app_pid" # progress bar
   blockHeight=`psql -d $DB_NAME -U $DB_USER -h localhost -p 5432 -t -c "select height from blocks order by height desc limit 1;"`
   dbSize=`psql -d $DB_NAME -U $DB_USER -h localhost -p 5432 -t -c "select pg_size_pretty(pg_database_size('$DB_NAME'));"`
   trap -- SIGINT # release interception user input
@@ -139,7 +154,9 @@ restore_snapshot(){
   echo "Please keep calm and don't push the button :)"
 
   # restore dump
-  gunzip -fcq "$SNAPSHOT_FILE" | psql -d $DB_NAME -U $DB_USER -h localhost -q &> /dev/null
+  (gunzip -fcq "$SNAPSHOT_FILE" | psql -d $DB_NAME -U $DB_USER -h localhost -q &> /dev/null) & # to start progress bar
+  app_pid=$! # progress bar
+  progress_bar "$sp1" "$app_pid" # progress bar
 
   trap -- SIGINT # release interception user input
 
