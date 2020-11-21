@@ -355,7 +355,7 @@ case $1 in
   ;;
 "help")
   echo "Available commands are: "
-  echo "  create              Create a new snapshot with level of compression 1"
+  echo "  create              Create a new snapshot with compression level of 1"
   echo "  create [1-9]        Create a new snapshot with level of compression from 1 to 9"
   echo "  create --best       Create a new snapshot with high level of compression (9)"
   echo "  create -v"
