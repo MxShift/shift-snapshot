@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION="0.8"
+VERSION="0.9"
 
 # CONFIG
 SHIFT_DIRECTORY=~/shift-lisk
@@ -16,7 +16,7 @@ export LANGUAGE=en_US.UTF-8
 #============================================================
 
 #============================================================
-#= snapshot.sh v0.8 created by Mx                           =
+#= snapshot.sh v0.9 created by Mx                           =
 #= Please consider voting for delegate 'mx'                 =
 #============================================================
 
@@ -114,21 +114,56 @@ getSnapshotStatus() {
   height="0"
   tHeight="2"
   
-  while [[ "$syncing" = "true" ]] || (( "$height"+1 < "$tHeight" ))
+  while [[ "$syncing" = "true" ]] || (( "$height"+2 < "$tHeight" ))
   do
 
     getNodeStatus
 
-    if (( "$height"+1 >= "$tHeight" )) ; then
-      for (( a = 1; a < 5; a++ ))
+    if (( "$height"+2 >= "$tHeight" )) ; then
+      for (( a = 0; a < 5; a++ ))
       do
         getNodeStatus
       done
-      echo -e "\n${greenTextOpen}$NOW -- $SHIFT_DIRECTORY"/$SHIFT_SNAPSHOT_NAME" snapshot verified!${colorTextClose}"  | tee -a $SNAPSHOT_LOG
+      echo -e "\n\n${boldTextOpen}$NOW -- $SHIFT_DIRECTORY"/$SHIFT_SNAPSHOT_NAME" - verified.${colorTextClose}"  | tee -a $SNAPSHOT_LOG
+      echo -e "${greenTextOpen}Snapshot verified! Height:$blockHeight Size: $myFileSizeCheck ${colorTextClose}"  | tee -a $SNAPSHOT_LOG
       break
     fi
 
   done
+}
+
+nodeStatusCheck() {
+  nodeOkay="false"
+  getNodeStatus
+
+  if (( "$height"+2 >= "$tHeight" )) ; then
+    nodeOkay="true"
+    echo -e "\n${greenTextOpen}Node is fine${colorTextClose}\n"
+  else
+    echo -e "\n${redTextOpen}Node is not synchronized with the blockchain. Can't create a good snapshot.${colorTextClose}"
+    echo "Trying to wait for synchronization for 60 seconds"
+
+    for (( a = 0; a < 60; a++ ))
+    do
+      getNodeStatus
+
+      if (( "$height"+2 >= "$tHeight" )) ; then
+        nodeOkay="true"
+        echo -e "\n${greenTextOpen}Node is fine${colorTextClose}\n"
+        break
+      fi
+    done
+
+    if (( "$height"+2 <= "$tHeight" )) ; then
+      echo -e "\n${redTextOpen}Node is not synchronized with the blockchain. Try again later or rebuild your node.${colorTextClose}"
+      exit
+    fi
+  fi
+}
+
+start_test() {
+
+  echo "test"
 }
 
 create_snapshot() {
@@ -164,12 +199,19 @@ create_snapshot() {
   "-v") # fake key :)
     dbComp="9"
     startVerified="true"
-    ;;    
+    ;;
+  "--verified") # fake key too :)
+    dbComp="9"
+    startVerified="true"
+    ;;
   *)
     # default
     dbComp="1"
     ;;
   esac
+
+  # height check
+  nodeStatusCheck
 
   export PGPASSWORD=$DB_PASS
   echo -e " ${boldTextOpen}+ Creating snapshot with compression: ${dbComp}${colorTextClose}"
@@ -191,11 +233,6 @@ create_snapshot() {
   else
     myFileSizeCheck=$(du -h "$SNAPSHOT_DIRECTORY$snapshotName" | cut -f1)
     echo -e "\n$NOW -- ${greenTextOpen}OK compressed snapshot created successfully${colorTextClose} at block$blockHeight ($myFileSizeCheck)." | tee -a $SNAPSHOT_LOG
-  fi
-
-  if [[ $startVerified = "true" ]]; then
-    echo -e "\n ${boldTextOpen}+ Verification snapshot${colorTextClose}"
-    mv snapshotLocation newname
   fi
 }
 
