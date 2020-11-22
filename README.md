@@ -1,13 +1,13 @@
 # shift-snapshot
 A bash script to automate backups for [**shift-lisk**](https://github.com/ShiftNrg/shift-lisk) blockchain
 
-🎉 **v1.0**
+🎉 **v1.1**
 
 For more information about Shift Community Project please visit: https://ShiftNRG.org
 
 ### Upgrade
 
-If you are in a version prior to **v1.0** you can upgrade with the following commands:
+If you are in a version prior to **v1.1** you can upgrade with the following commands:
 
 ```
 cd ~/shift-snapshot/ 
