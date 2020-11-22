@@ -2,7 +2,7 @@
 VERSION="1.0"
 
 # CONFIG
-SHIFT_DIRECTORY=~/shift-m
+SHIFT_DIRECTORY=~/shift-lisk
 TRUSTED_NODE="https://wallet.shiftnrg.org"
 
 # EXPORT
