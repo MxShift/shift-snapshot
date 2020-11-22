@@ -2,7 +2,7 @@
 VERSION="1.0"
 
 # CONFIG
-SHIFT_DIRECTORY=~/shift-lisk
+SHIFT_DIRECTORY=~/shift-m
 TRUSTED_NODE="https://wallet.shiftnrg.org"
 
 # EXPORT
@@ -102,13 +102,12 @@ getNodeStatus() {
   tResponse=$(curl --connect-timeout 2 --fail  -s $TRUSTED_NODE/api/loader/status/sync)
   tHeight=$(echo $tResponse | jq '.height')
 
-  printf "\r${boldTextOpen}BLOCKCHAIN:${colorTextClose} $tHeight ${boldTextOpen}HEIGHT:${colorTextClose} $height ${boldTextOpen}CONSENSUS:${colorTextClose} ${consensus}%% ${boldTextOpen}SYNCING:${colorTextClose} ${syncing}"
+  printf "\r${boldTextOpen}BLOCKCHAIN:${colorTextClose} $tHeight ${boldTextOpen}HEIGHT:${colorTextClose} $height ${boldTextOpen}CONSENSUS:${colorTextClose} ${consensus}%% ${boldTextOpen}SYNCING:${colorTextClose} ${syncing}          "
   sleep 1
 }
 
 getSnapshotStatus() {
-  echo -e "\n "
-  echo -e "${boldTextOpen}Please wait for blockchain synchronization:${colorTextClose}"
+  echo -e "\n${boldTextOpen}Please wait for blockchain synchronization:${colorTextClose}"
 
   syncing="true"
   height="0"
@@ -120,12 +119,16 @@ getSnapshotStatus() {
     getNodeStatus
 
     if (( "$height"+2 >= "$tHeight" )) ; then
+      nodeIsSynced="true"
+      # to be sure
       for (( a = 0; a < 5; a++ ))
       do
         getNodeStatus
       done
-      echo -e "\n\n${boldTextOpen}$NOW -- $SHIFT_DIRECTORY"/$SHIFT_SNAPSHOT_NAME" - verified.${colorTextClose}"  | tee -a $SNAPSHOT_LOG
-      echo -e "${greenTextOpen}+ Snapshot verified! Height:$blockHeight Size: $myFileSizeCheck ${colorTextClose}"  | tee -a $SNAPSHOT_LOG
+      if [[ $startVerified = "true" ]]; then
+        echo -e "\n\n${boldTextOpen}$NOW -- $SHIFT_DIRECTORY"/$SHIFT_SNAPSHOT_NAME" - verified.${colorTextClose}"  | tee -a $SNAPSHOT_LOG
+        echo -e "${greenTextOpen}+ Snapshot verified! Height:$blockHeight Size: $myFileSizeCheck ${colorTextClose}"  | tee -a $SNAPSHOT_LOG
+      fi
       break
     fi
 
@@ -242,7 +245,7 @@ create_snapshot() {
     echo -e "\n$NOW -- ${greenTextOpen}OK compressed snapshot created successfully${colorTextClose} at block$blockHeight ($myFileSizeCheck)." | tee -a $SNAPSHOT_LOG
   fi
 
-  if [[ $startVerified == "true" ]]; then
+  if [[ $startVerified = "true" ]]; then
     echo -e "\n ${boldTextOpen}+ Verifying snapshot${colorTextClose}"
     echo "--------------------------------------------------"
     # rename
@@ -317,15 +320,16 @@ restore_snapshot(){
 
   trap -- SIGINT # release interception user input
 
-  if [ $? != 0 ]; then
-    echo -e "${redTextOpen}X Failed to restore.${colorTextClose}"
-    exit 1
-  else
-    echo -e "${greenTextOpen}OK snapshot restored successfully.${colorTextClose}"
-  fi
-
   bash ${SHIFT_DIRECTORY}/shift_manager.bash start
 
+  getSnapshotStatus
+
+  if [[ "$nodeIsSynced" = "true" ]] ; then
+    echo -e "\n${greenTextOpen}OK snapshot restored successfully.${colorTextClose}"
+  else
+    echo -e "${redTextOpen}X Failed to restore.${colorTextClose}"
+    exit 1
+  fi
 }
 
 show_log(){
