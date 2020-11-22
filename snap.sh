@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION="1.0"
+VERSION="1.1"
 
 # CONFIG
 SHIFT_DIRECTORY=~/shift-lisk
@@ -16,7 +16,7 @@ export LANGUAGE=en_US.UTF-8
 #============================================================
 
 #============================================================
-#= snapshot.sh v1.0 created by Mx                           =
+#= snapshot.sh v1.1 created by Mx                           =
 #= Please consider voting for delegate 'mx'                 =
 #============================================================
 
