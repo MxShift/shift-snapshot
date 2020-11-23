@@ -95,6 +95,18 @@ progress_bar() {
     done
 }
 
+stopNode() {
+  bash ${SHIFT_DIRECTORY}/shift_manager.bash stop
+}
+
+startNode() {
+  bash ${SHIFT_DIRECTORY}/shift_manager.bash start
+}
+
+rebuildtNode() {
+  bash ${SHIFT_DIRECTORY}/shift_manager.bash rebuild
+}
+
 getNodeStatus() {
   response=$(curl --connect-timeout 2 --fail  -s $HTTP://$IP:$PORT/api/loader/status/sync)
   height=$(echo $response | jq '.height')
@@ -120,6 +132,9 @@ snapshotStatusCheck() {
 
     getNodeStatus
 
+    # check $syncing after 5 min, if "false" -> break the loop
+
+    # synced
     if (( "$height"+2 >= "$tHeight" )) ; then
       nodeIsSynced="true"
       # to be sure
@@ -348,15 +363,21 @@ restore_snapshot(){
 
   trap -- SIGINT # release interception user input
 
-  bash ${SHIFT_DIRECTORY}/shift_manager.bash start
-
-  snapshotStatusCheck
-
-  if [[ "$nodeIsSynced" = "true" ]] ; then
-    echo -e "\n${greenTextOpen}OK snapshot restored successfully.${colorTextClose}"
-  else
-    echo -e "${redTextOpen}X Failed to restore.${colorTextClose}"
+  if [ $? != 0 ] || (( ctrlc_count > "0" )); then
+    echo -e "${redTextOpen}X Failed to restore. Please rebuild your shift-lisk node.${colorTextClose}"
+    bash ${SHIFT_DIRECTORY}/shift_manager.bash start
     exit 1
+  else
+    bash ${SHIFT_DIRECTORY}/shift_manager.bash start
+
+    snapshotStatusCheck
+
+    if [[ "$nodeIsSynced" = "true" ]] ; then
+      echo -e "\n${greenTextOpen}OK snapshot restored successfully.${colorTextClose}"
+    else
+      echo -e "${redTextOpen}X Snapshot restored, but failed to sync with the blockchain.${colorTextClose}"
+      exit 1
+    fi
   fi
 }
 
