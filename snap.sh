@@ -103,8 +103,8 @@ startNode() {
   bash ${SHIFT_DIRECTORY}/shift_manager.bash start
 }
 
-rebuildtNode() {
-  bash ${SHIFT_DIRECTORY}/shift_manager.bash rebuild
+rebuildNode() {
+  echo "n" | bash ${SHIFT_DIRECTORY}/shift_manager.bash rebuild
 }
 
 getNodeStatus() {
@@ -304,7 +304,7 @@ create_snapshot() {
     app_pid=$! # progress bar
     progress_bar "$sp1" "$app_pid" # progress bar
 
-    echo "n" | bash ${SHIFT_DIRECTORY}/shift_manager.bash rebuild
+    rebuildNode
 
     # pause to start node synchronization
     (sleep 5) & # to start progress bar
@@ -335,7 +335,7 @@ restore_snapshot(){
      exit 1
   fi
 
-  bash ${SHIFT_DIRECTORY}/shift_manager.bash stop
+  stopNode
 
   trap no_ctrlc SIGINT # intercept user input
 
@@ -365,10 +365,10 @@ restore_snapshot(){
 
   if [ $? != 0 ] || (( ctrlc_count > "0" )); then
     echo -e "${redTextOpen}X Failed to restore. Please rebuild your shift-lisk node.${colorTextClose}"
-    bash ${SHIFT_DIRECTORY}/shift_manager.bash start
+    startNode
     exit 1
   else
-    bash ${SHIFT_DIRECTORY}/shift_manager.bash start
+    startNode
 
     snapshotStatusCheck
 
