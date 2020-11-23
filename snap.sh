@@ -4,6 +4,9 @@ VERSION="1.2"
 # CONFIG
 SHIFT_DIRECTORY=~/shift-lisk
 TRUSTED_NODE="https://wallet.shiftnrg.org"
+NETWORK="mainnet"
+HTTP="http"
+PORT="9305"
 
 # EXPORT
 export LC_ALL=en_US.UTF-8
@@ -16,7 +19,7 @@ export LANGUAGE=en_US.UTF-8
 #============================================================
 
 #============================================================
-#= snapshot.sh v1.2 created by Mx                           =
+#= snap.sh v1.2 created by Mx                               =
 #= Please consider voting for delegate 'mx'                 =
 #============================================================
 
@@ -49,7 +52,7 @@ SNAPSHOT_COUNTER=snapshot/counter.json
 SNAPSHOT_LOG=snapshot/snapshot.log
 if [ ! -f "snapshot/counter.json" ]; then
   mkdir -p snapshot
-  sudo chmod +x shift-snapshot.sh
+  sudo chmod +x snap.sh
   echo "0" > $SNAPSHOT_COUNTER
   sudo chown postgres:${USER:=$(/usr/bin/id -run)} snapshot
   sudo chmod -R 777 snapshot
@@ -57,8 +60,6 @@ fi
 SNAPSHOT_DIRECTORY=snapshot/
 SHIFT_SNAPSHOT_NAME="blockchain.db.gz"
 IP="127.0.0.1"
-HTTP="http"
-PORT="9305"
 
 blockHeight="0"
 
@@ -200,32 +201,33 @@ uploadToGitHub() {
   fileLocation=$SHIFT_DIRECTORY"/$SHIFT_SNAPSHOT_NAME"
 
   todayDate=$(date +"%d-%m-%Y")
-
-  githubLink=$(git config --get remote.origin.url | cut -d '.' -f 1,2)
+  tag="$NETWORK"
 
   blockHeight=$(blockHeightPrettify $blockHeight)
 
-  textLine1="You can use this blockchain snapshot to fix your node up to block $blockHeight<br/>"
-  textLine2="<pre><code>cd shift-lisk</code><br/>"
-  textLine3="<code>sudo rm -f blockchain.db.gz</code><br/>"
-  textLine4="<code>wget $githubLink/releases/download/$todayDate/$SHIFT_SNAPSHOT_NAME</code><br/>"
-  textLine5="<code>echo "n" | ./shift_manager.bash rebuild</code></pre><br/>"
-  textLine6="<blockquote>Thanks to [BFX](https://github.com/Bx64) for a first version of this instruction.</blockquote>"
-
   titleLine="$todayDate verified shift-lisk snapshot up to block $blockHeight"
 
+  githubLink=$(git config --get remote.origin.url | cut -d '.' -f 1,2)
+
+  textLine1="<p>You can use this blockchain snapshot to fix your node up to block <b>$blockHeight</b></p>"
+  textLine2="<pre><code>cd shift-lisk</code><br/>"
+  textLine3="<code>sudo rm -f blockchain.db.gz</code><br/>"
+  textLine4="<code>wget $githubLink/releases/download/$tag/$SHIFT_SNAPSHOT_NAME</code><br/>"
+  textLine5="<code>echo "n" | ./shift_manager.bash rebuild</code></pre><br/>"
+  textLine6="<blockquote>Thanks to <a href="https://github.com/Bx64">BFX</a> for a first version of this instruction.</blockquote>"
+
   # delete old today's release if exists
-  echo gh release delete $todayDate
+  gh release delete $tag --yes
 
   # create a GitHub release and upload a verified snapshot
-  gh release create $todayDate "$fileLocation" -n "${textLine1}${textLine2}${textLine3}${textLine4}${textLine5}${textLine6}" -t "$titleLine"
+  gh release create $tag "$fileLocation" -n "${textLine1}${textLine2}${textLine3}${textLine4}${textLine5}${textLine6}" -t "$titleLine"
 
 }
 
 start_test() {
 
   echo -e "Test started\n"
-  
+
 }
 
 create_snapshot() {
@@ -313,18 +315,18 @@ create_snapshot() {
   if [[ $startVerified = "true" ]]; then
     echo -e "\n ${boldTextOpen}+ Verifying snapshot${colorTextClose}"
     echo "--------------------------------------------------"
+    echo -e "${highlitedTextOpen}shift-lisk node will be stopped for rebuild${colorTextClose}"
+    echo -e "press ${boldTextOpen}Ctrl+C${colorTextClose} to abort"
+    (sleep 5) & # to start progress bar
+    app_pid=$! # progress bar
+    progress_bar "$sp1" "$app_pid" # progress bar
+
     # rename
     sudo mv $SNAPSHOT_DIRECTORY"$snapshotName" $SNAPSHOT_DIRECTORY"$SHIFT_SNAPSHOT_NAME"
     # delete old
     sudo rm -f $SHIFT_DIRECTORY"/$SHIFT_SNAPSHOT_NAME"
     # move new
     sudo mv $SNAPSHOT_DIRECTORY"$SHIFT_SNAPSHOT_NAME" ${SHIFT_DIRECTORY}"/"
-
-    echo -e "${highlitedTextOpen}shift-lisk node will be stopped for rebuild${colorTextClose}"
-    echo -e "press ${boldTextOpen}Ctrl+C${colorTextClose} to abort"
-    (sleep 5) & # to start progress bar
-    app_pid=$! # progress bar
-    progress_bar "$sp1" "$app_pid" # progress bar
 
     rebuildNode
 
