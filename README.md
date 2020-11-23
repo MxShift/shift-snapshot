@@ -1,13 +1,13 @@
 # shift-snapshot
 A bash script to automate backups for [**shift-lisk**](https://github.com/ShiftNrg/shift-lisk) blockchain
 
-🎉 **v1.1**
+🎉 **v1.2**
 
 For more information about Shift Community Project please visit: https://ShiftNRG.org
 
 ### Upgrade
 
-If you are in a version prior to **v1.1** you can upgrade with the following commands:
+If you are in a version prior to **v1.2** you can upgrade with the following commands:
 
 ```
 cd ~/shift-snapshot/ 
@@ -37,6 +37,7 @@ chmod +x snap.sh
     - create --best
     - create --verified
     - create -v
+    - create -v --yes
     - restore
     - log
     - help
@@ -98,6 +99,23 @@ or
 ```
 ./shap.sh create -v
 ```
+
+## Upload to GitHub release
+
+Added a feature to upload verified snapshots to a release section of a GitHub repository.
+To do this automatically, without manual confirmation, use:
+
+```
+./shap.sh create --verified --yes
+```
+
+or
+
+```
+./shap.sh create -v -y
+```
+
+To use this feature, you need to install [gh](https://github.com/cli/cli/blob/trunk/docs/install_linux.md).
 
 ### restore
 
@@ -193,3 +211,28 @@ You will have a folder in ~/shift-snapshot/ called `snapshot/` where all your sn
 If you want to use a snapshot from different place (official snapshot for example or other node) you will need to download the snapshot file (with prefix: shift_db*) and copy it to the `~/shift-snapshot/snapshot/` folder.
 After you copy the shift_db*.tar file you can restore the blockchain with: `bash snap.sh restore` and will use the last file found in the snapshot/ folder.<br>
 If you use the `schedule` command be aware you will have a log file located in `~/shift-snapshot/cron.log` with this you will know what is happened with your schedule.
+
+
+<!-- ROADMAP :)
+
+Добавить команду status, выводить статус ноды.
+
+Сделать возможность выбора, из какого снапшота восстанавливаться.
+
+Сделать не только предупреждение о закрытии, но и предотвращать закрытие при создании и восстановлении дампа.
+
+Разобраться что за counter.json файл и нужен ли он.
+
+Добавить удаление снапшотов, с выбором, и всех сразу -a --all
+
+Добавить таймер на остановку если нода всё-таки не хочет синхронизироваться в snapshotStatusCheck
+
+Может добавить вместо restore : -r , а вместо create : -c
+
+? Подумать над тем, как можно было бы не делать постоянно полную базу, а иметь некую core базу, и от неё уже бекапить только новые фрагменты. Например сделать core на блоке 4638800, и бекапить только новые блоки.
+
+OK - Подставлять уровень компрессии через ключ, типа "create -c 1-9" или "create --best" и "create --fast"
+OK - Сделать проверку при крашах, чтобы не писалось OK snapshot restored successfully, когда на самом деле это не так.
+OK - Добавить в рестор проверку на успешное восстановление.
+
+-->
