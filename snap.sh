@@ -225,28 +225,7 @@ uploadToGitHub() {
 start_test() {
 
   echo -e "Test started\n"
-
-  # yeees="true"
-
-  nodeIsSynced="true"
-
-  if [[ "$nodeIsSynced" = "true" ]] ; then
-
-    if [[ "$yeees" != "true" ]]; then
-
-      read -p "$(echo -e ${highlitedTextOpen}"Upload it to your GitHub repository (y/n)?"${colorTextClose}) " -r
-
-      if [[ ! $REPLY =~ ^[Yyнд]$ ]]; then
-        echo "Exit."
-        exit 1
-      fi
-      
-    fi
-
-    echo uploadToGitHub
-
-  fi
-
+  
 }
 
 create_snapshot() {
@@ -288,10 +267,16 @@ create_snapshot() {
   "-v")
     dbComp="9"
     startVerified="true"
+    if [[ "$2" = "-y" ]] || [[ "$2" = "--yes" ]]; then
+      yeees="true"
+    fi
     ;;
   "--verified")
     dbComp="9"
     startVerified="true"
+    if [[ "$2" = "-y" ]] || [[ "$2" = "--yes" ]]; then
+      yeees="true"
+    fi    
     ;;
   *)
     # default
@@ -447,7 +432,7 @@ show_log(){
 
 case $1 in
 "create")
-  create_snapshot $2
+  create_snapshot $2 $3
   ;;
 "restore")
   restore_snapshot
@@ -459,7 +444,7 @@ case $1 in
   echo "Hello my friend - $NOW"
   ;;
 "test")
-  start_test $2
+  start_test $2 $3
   ;;
 "help")
   echo "Available commands are: "
@@ -468,13 +453,15 @@ case $1 in
   echo "  create --best       Create a new snapshot with high level of compression (9)"
   echo "  create -v"
   echo "  create --verified   Create a new snapshot with high level of compression then verify it"
+  echo "  create -v -y"
+  echo "  create -v --yes     Create a verified snapshot and upload it to GitHub repo release section"
   echo "  restore             Restore the last snapshot available in folder snapshot/"
   echo "  log                 Display log"
   ;;
 *)
   echo "Error: Unrecognized command."
   echo ""
-  echo "Available commands are: create [1-9] -v, restore, log, help"
+  echo "Available commands are: create [1-9] -v -y, restore, log, help"
   echo "Try: bash snap.sh help"
   ;;
 esac
