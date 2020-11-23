@@ -181,6 +181,20 @@ nodeStatusCheck() {
   fi
 }
 
+blockHeightPrettify() {
+  for (( i=0; $i<${#1}; i++ )) # ${#1} is first parameter
+  do 
+      prettyBlockHeight=${prettyBlockHeight}${1:$i:1} # ${1 is first parameter
+
+      # add commas
+      if (( $i == 0 )) || (( $i == 3 )) ; then
+          prettyBlockHeight=${prettyBlockHeight}","
+      fi
+  done
+
+  echo "$prettyBlockHeight"
+}
+
 uploadToGitHub() {
 
   fileLocation=$SHIFT_DIRECTORY"/$SHIFT_SNAPSHOT_NAME"
@@ -188,6 +202,8 @@ uploadToGitHub() {
   todayDate=$(date +"%d-%m-%Y")
 
   githubLink=$(git config --get remote.origin.url | cut -d '.' -f 1,2)
+
+  blockHeight=$(blockHeightPrettify $blockHeight)
 
   textLine1="You can use this blockchain snapshot to fix your node up to block $blockHeight<br/>"
   textLine2="<pre><code>cd shift-lisk</code><br/>"
@@ -202,13 +218,34 @@ uploadToGitHub() {
   echo gh release delete $todayDate
 
   # create a GitHub release and upload a verified snapshot
-  echo gh release create $todayDate "$fileLocation" -n "${textLine1}${textLine2}${textLine3}${textLine4}${textLine5}${textLine6}" -t "$titleLine"
+  gh release create $todayDate "$fileLocation" -n "${textLine1}${textLine2}${textLine3}${textLine4}${textLine5}${textLine6}" -t "$titleLine"
 
 }
 
 start_test() {
 
   echo -e "Test started\n"
+
+  # yeees="true"
+
+  nodeIsSynced="true"
+
+  if [[ "$nodeIsSynced" = "true" ]] ; then
+
+    if [[ "$yeees" != "true" ]]; then
+
+      read -p "$(echo -e ${highlitedTextOpen}"Upload it to your GitHub repository (y/n)?"${colorTextClose}) " -r
+
+      if [[ ! $REPLY =~ ^[Yyнд]$ ]]; then
+        echo "Exit."
+        exit 1
+      fi
+      
+    fi
+
+    echo uploadToGitHub
+
+  fi
 
 }
 
@@ -312,6 +349,24 @@ create_snapshot() {
     progress_bar "$sp1" "$app_pid" # progress bar
 
     snapshotStatusCheck
+
+    # upload to GitHub
+    if [[ "$nodeIsSynced" = "true" ]] ; then
+
+      if [[ "$yeees" != "true" ]]; then
+
+        read -p "$(echo -e ${highlitedTextOpen}"Upload it to your GitHub repository (y/n)?"${colorTextClose}) " -r
+
+        if [[ ! $REPLY =~ ^[Yyнд]$ ]]; then
+          echo "Exit."
+          exit 1
+        fi
+
+      fi
+
+      uploadToGitHub
+
+    fi
   fi
 }
 
@@ -326,7 +381,7 @@ restore_snapshot(){
     exit 1
   fi
   echo -e "Snapshot to restore = $SNAPSHOT_FILE"
-  read -p "$(echo -e ${highlitedTextOpen}"shift-lisk node will be stopped, are you ready (y/n)?"${colorTextClose})  " -r
+  read -p "$(echo -e ${highlitedTextOpen}"shift-lisk node will be stopped, are you ready (y/n)?"${colorTextClose}) " -r
 
   if [[ ! $REPLY =~ ^[Yyнд]$ ]]
   then
