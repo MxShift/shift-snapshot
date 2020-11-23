@@ -1,4 +1,10 @@
-## What's new in version 1.1
+# Changelog
+
+## 1.2 (24-11-2020)
+
++ Added a feature to upload verified snapshots to a release section of a GitHub repository
+
+## 1.1 (22-11-2020)
 
 + Added check for synchronization with the blockchain after restoring a snapshot.
 
