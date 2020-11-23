@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION="1.1"
+VERSION="1.2"
 
 # CONFIG
 SHIFT_DIRECTORY=~/shift-lisk
@@ -16,7 +16,7 @@ export LANGUAGE=en_US.UTF-8
 #============================================================
 
 #============================================================
-#= snapshot.sh v1.1 created by Mx                           =
+#= snapshot.sh v1.2 created by Mx                           =
 #= Please consider voting for delegate 'mx'                 =
 #============================================================
 
@@ -59,6 +59,8 @@ SHIFT_SNAPSHOT_NAME="blockchain.db.gz"
 IP="127.0.0.1"
 HTTP="http"
 PORT="9305"
+
+blockHeight="0"
 
 
 NOW=$(date +"%d-%m-%Y - %T")
@@ -106,7 +108,7 @@ getNodeStatus() {
   sleep 1
 }
 
-getSnapshotStatus() {
+snapshotStatusCheck() {
   echo -e "\n${boldTextOpen}Please wait for blockchain synchronization:${colorTextClose}"
 
   syncing="true"
@@ -164,9 +166,35 @@ nodeStatusCheck() {
   fi
 }
 
+uploadToGitHub() {
+
+  fileLocation=$SHIFT_DIRECTORY"/$SHIFT_SNAPSHOT_NAME"
+
+  todayDate=$(date +"%d-%m-%Y")
+
+  githubLink=$(git config --get remote.origin.url | cut -d '.' -f 1,2)
+
+  textLine1="You can use this blockchain snapshot to fix your node up to block $blockHeight<br/>"
+  textLine2="<pre><code>cd shift-lisk</code><br/>"
+  textLine3="<code>sudo rm -f blockchain.db.gz</code><br/>"
+  textLine4="<code>wget $githubLink/releases/download/$todayDate/$SHIFT_SNAPSHOT_NAME</code><br/>"
+  textLine5="<code>echo "n" | ./shift_manager.bash rebuild</code></pre><br/>"
+  textLine6="<blockquote>Thanks to [BFX](https://github.com/Bx64) for a first version of this instruction.</blockquote>"
+
+  titleLine="$todayDate verified shift-lisk snapshot up to block $blockHeight"
+
+  # delete old today's release if exists
+  echo gh release delete $todayDate
+
+  # create a GitHub release and upload a verified snapshot
+  echo gh release create $todayDate "$fileLocation" -n "${textLine1}${textLine2}${textLine3}${textLine4}${textLine5}${textLine6}" -t "$titleLine"
+
+}
+
 start_test() {
 
-  echo "Test"
+  echo -e "Test started\n"
+
 }
 
 create_snapshot() {
@@ -268,7 +296,7 @@ create_snapshot() {
     app_pid=$! # progress bar
     progress_bar "$sp1" "$app_pid" # progress bar
 
-    getSnapshotStatus
+    snapshotStatusCheck
   fi
 }
 
@@ -322,7 +350,7 @@ restore_snapshot(){
 
   bash ${SHIFT_DIRECTORY}/shift_manager.bash start
 
-  getSnapshotStatus
+  snapshotStatusCheck
 
   if [[ "$nodeIsSynced" = "true" ]] ; then
     echo -e "\n${greenTextOpen}OK snapshot restored successfully.${colorTextClose}"
