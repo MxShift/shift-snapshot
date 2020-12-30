@@ -34,7 +34,7 @@ echo " "
 
 if [ ! -f ${SHIFT_DIRECTORY}/app.js ]; then
   echo -e "${redTextOpen}Error: No shift-lisk installation detected in the directory ${SHIFT_DIRECTORY}${colorTextClose}"
-  echo -e "Please, change config: ${boldTextOpen}nano shift-snapshot.sh${colorTextClose}"
+  echo -e "Please, change config: ${boldTextOpen}nano snap.sh${colorTextClose}"
   echo "or install: https://github.com/ShiftNrg/shift-lisk"
   exit 1
 fi
@@ -209,7 +209,7 @@ uploadToGitHub() {
 
   githubLink=$(git config --get remote.origin.url | cut -d '.' -f 1,2)
 
-  textLine1="<p>You can use this blockchain snapshot to fix your node up to block <b>$blockHeight</b></p>"
+  textLine1="<p>You can use this blockchain snapshot to rebuild your node up to block <b>$blockHeight</b></p>"
   textLine2="<pre><code>cd shift-lisk</code><br/>"
   textLine3="<code>sudo rm -f blockchain.db.gz</code><br/>"
   textLine4="<code>wget $githubLink/releases/download/$tag/$SHIFT_SNAPSHOT_NAME</code><br/>"
