@@ -115,7 +115,7 @@ or
 ./shap.sh create -v -y
 ```
 
-To use this feature, you need to install [gh](https://github.com/cli/cli/blob/trunk/docs/install_linux.md).
+To use this feature, you need to install [gh](https://github.com/cli/cli/blob/trunk/docs/install_linux.md). And run `gh auth login`.
 
 ### restore
 
