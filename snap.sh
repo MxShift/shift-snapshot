@@ -316,7 +316,7 @@ create_snapshot() {
     echo -e "\n ${boldTextOpen}+ Verifying snapshot${colorTextClose}"
     echo "--------------------------------------------------"
     echo -e "${highlitedTextOpen}shift-lisk node will be stopped for rebuild${colorTextClose}"
-    echo -e "press ${boldTextOpen}Ctrl+C${colorTextClose} to abort"
+    echo -e "press ${boldTextOpen}Ctrl+C${colorTextClose} to cancel"
     (sleep 5) & # to start progress bar
     app_pid=$! # progress bar
     progress_bar "$sp1" "$app_pid" # progress bar
